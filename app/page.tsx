@@ -11,7 +11,7 @@ const members = [
     certificate: '轻工化工系副主任、副教授，中心负责人，贵州省食品工业协会副会长，贵州省2025届白酒评委',
     bio: '围绕特色食品研发与工艺优化开展教学与科研，长期推动质量管理体系在项目落地中的应用。',
     tags: ['特色食品研发', '工艺优化', '质量管理'],
-    photo: '/members/zou-yan.svg'
+    photo: '/members/zou-yan.png'
   },
   {
     name: '沈祉君',
@@ -23,7 +23,7 @@ const members = [
     certificate: '高级品酒师、贵州省食品科学技术学会会员',
     bio: '聚焦特色饮品与酱香型白酒方向研究，关注食品营养健康与食品加工工艺技术协同创新。',
     tags: ['特色饮品研发', '酱香型白酒', '食品营养健康', '加工工艺'],
-    photo: '/members/shen-zhijun.svg'
+    photo: '/members/shen-zhijun.png'
   },
   {
     name: '李扬',
@@ -35,7 +35,7 @@ const members = [
     certificate: '高级品酒师、贵州省2025届白酒评委、贵州省酸汤协会会员',
     bio: '聚焦酱香白酒与酸汤感官分析，推动药食同源饮品研发及酱香低度酒智能体研发应用。',
     tags: ['酱香白酒', '酸汤感官分析', '药食同源饮品', '低度酒智能体'],
-    photo: '/members/li-yang.svg'
+    photo: '/members/li-yang.png'
   },
   {
     name: '曹婧',
@@ -47,7 +47,7 @@ const members = [
     certificate: '轻工化工系教师，食品加工技术高级工程师，高级食品检验工，贵州省食品科学技术学会会员，2016年全国食品工业科技创新卓越工作者',
     bio: '长期从事食品研发与工艺优化工作，擅长标签管理和标准化管理体系建设。',
     tags: ['食品研发', '配方工艺优化', '标签管理', '标准化管理'],
-    photo: '/members/cao-jing.svg'
+    photo: '/members/cao-jing.png'
   },
   {
     name: '马志方',
@@ -59,7 +59,7 @@ const members = [
     certificate: '食品检验检测专业教研室主任，高级农产品食品检验员，曾任职全球知名乳制品企业和水果制品企业',
     bio: '具备产业与高校双重实践经验，专注质量管理、食品合规与供应链协同管理。',
     tags: ['质量管理', '食品合规', '供应商管理', '项目管理'],
-    photo: '/members/ma-zhifang.svg'
+    photo: '/members/ma-zhifang.png'
   },
   {
     name: '王怡',
@@ -71,7 +71,7 @@ const members = [
     certificate: '化学基础教研室主任，高级农产品食品检验员',
     bio: '围绕食品质量检验检测与质量管理开展教学科研，支撑团队质量控制与评价体系建设。',
     tags: ['质量检验检测', '质量管理'],
-    photo: '/members/wang-yi.svg'
+    photo: '/members/wang-yi.png'
   },
   {
     name: '李颖',
@@ -83,7 +83,7 @@ const members = [
     certificate: '农产品食品检验员三级、品酒师三级、贵州省酸汤协会会员',
     bio: '专注发酵微生物与酸汤菌种筛选，研究食品减压检测技术在质量评价中的应用。',
     tags: ['发酵微生物', '酸汤菌种筛选', '食品检测'],
-    photo: '/members/li-ying.svg'
+    photo: '/members/li-ying.png'
   }
 ];
 
@@ -91,13 +91,6 @@ const metrics = [
   { label: '团队成员', value: '7', detail: '核心成员展示' },
   { label: '研究方向', value: '8+', detail: '特色食品、饮品研发、白酒、发酵微生物等' },
   { label: '专业证书', value: '28', detail: '技术与管理双向认证' }
-];
-
-const timeline = [
-  { year: '2022', text: '成立核心研究组，聚焦智能系统落地与平台化建设。' },
-  { year: '2023', text: '完成第一代团队官网，建立标准化成员档案体系。' },
-  { year: '2024', text: '扩展跨学科协作机制，覆盖算法、产品、设计、工程。' },
-  { year: '2025', text: '升级为高质感展示站，支持品牌化对外展示与对接。' }
 ];
 
 const achievements = {
