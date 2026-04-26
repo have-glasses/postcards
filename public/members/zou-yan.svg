@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1600" viewBox="0 0 1200 1600">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#67e8f9"/>
+      <stop offset="100%" stop-color="#818cf8"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="1600" fill="url(#bg)"/>
+  <circle cx="600" cy="540" r="220" fill="#0b1222" stroke="url(#accent)" stroke-width="10"/>
+  <circle cx="600" cy="470" r="92" fill="#cbd5e1" opacity="0.92"/>
+  <path d="M430 760c40-130 140-190 170-190s130 60 170 190" fill="#cbd5e1" opacity="0.92"/>
+  <rect x="160" y="1140" width="880" height="250" rx="36" fill="#0b1222" opacity="0.86"/>
+  <text x="600" y="1245" text-anchor="middle" font-size="86" fill="#e2e8f0" font-family="serif" font-weight="700">πç</text>
+  <text x="600" y="1335" text-anchor="middle" font-size="40" fill="#94a3b8" font-family="serif">5ﬁ{ÂL'f</text>
+  <path d="M330 1460h540" stroke="url(#accent)" stroke-width="6" stroke-linecap="round" opacity="0.7"/>
+</svg>
