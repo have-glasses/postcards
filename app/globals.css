@@ -461,6 +461,7 @@ body {
 
 .admin-header,
 .admin-login,
+.admin-actions,
 .admin-tags-title,
 .admin-tag-row {
   display: flex;
@@ -520,6 +521,12 @@ body {
   box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.12);
 }
 
+.admin-field-help {
+  color: #94a3b8;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
 .admin-page button {
   cursor: pointer;
   border: 0;
@@ -529,6 +536,30 @@ body {
 .admin-page button:disabled {
   cursor: wait;
   opacity: 0.65;
+}
+
+.admin-actions {
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.danger-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(248, 113, 113, 0.42) !important;
+  border-radius: 999px;
+  background: rgba(127, 29, 29, 0.42);
+  color: #fecaca;
+  min-height: 2.85rem;
+  padding: 0.72rem 1.15rem;
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.danger-action:hover {
+  transform: translateY(-1px);
+  border-color: rgba(248, 113, 113, 0.68) !important;
+  background: rgba(127, 29, 29, 0.58);
 }
 
 .admin-status {
@@ -837,6 +868,7 @@ body {
 
   .admin-header,
   .admin-login,
+  .admin-actions,
   .admin-tag-row {
     align-items: stretch;
     flex-direction: column;

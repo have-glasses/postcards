@@ -74,6 +74,33 @@ export function AdminEditor({ initialMembers }: { initialMembers: Member[] }) {
     });
   }
 
+  function addMember() {
+    const member = createBlankMember(members);
+
+    setMembers((currentMembers) => [...currentMembers, member]);
+    setActiveSlug(member.slug);
+    setSaveState({ status: 'idle', message: '' });
+  }
+
+  function removeActiveMember() {
+    if (!activeMember) {
+      return;
+    }
+
+    const confirmed = window.confirm(`确定删除 ${activeMember.name || activeMember.slug} 吗？保存后才会同步到线上。`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    setMembers((currentMembers) => {
+      const nextMembers = currentMembers.filter((member) => member.slug !== activeMember.slug);
+      setActiveSlug(nextMembers[0]?.slug ?? '');
+      return nextMembers;
+    });
+    setSaveState({ status: 'idle', message: '' });
+  }
+
   async function saveMembers() {
     setSaveState({ status: 'saving', message: '保存中...' });
 
@@ -132,16 +159,23 @@ export function AdminEditor({ initialMembers }: { initialMembers: Member[] }) {
 
         {saveState.message ? <p className={`admin-status admin-status-${saveState.status}`}>{saveState.message}</p> : null}
 
+        <div className="admin-actions">
+          <button type="button" className="secondary-action" onClick={addMember}>新增成员</button>
+          <button type="button" className="danger-action" onClick={removeActiveMember} disabled={!activeMember}>
+            删除当前成员
+          </button>
+        </div>
+
         <div className="admin-layout">
           <aside className="admin-member-list">
-            {members.map((member) => (
+            {members.map((member, index) => (
               <button
-                key={member.slug}
+                key={`${member.slug}-${index}`}
                 type="button"
                 className={member.slug === activeMember?.slug ? 'active' : ''}
                 onClick={() => setActiveSlug(member.slug)}
               >
-                <span>{member.name}</span>
+                <span>{member.name || '未命名成员'}</span>
                 <small>/{member.slug}</small>
               </button>
             ))}
@@ -167,6 +201,9 @@ export function AdminEditor({ initialMembers }: { initialMembers: Member[] }) {
                       }
                     />
                   )}
+                  {field.key === 'slug' ? (
+                    <small className="admin-field-help">不能重复；建议使用小写英文、数字和短横线，例如 li-yang。</small>
+                  ) : null}
                 </label>
               ))}
 
@@ -188,6 +225,32 @@ export function AdminEditor({ initialMembers }: { initialMembers: Member[] }) {
       </section>
     </main>
   );
+}
+
+function createBlankMember(existingMembers: Member[]): Member {
+  const nextIndex = existingMembers.length + 1;
+  let slug = `new-member-${nextIndex}`;
+  let suffix = nextIndex;
+  const usedSlugs = new Set(existingMembers.map((member) => member.slug));
+
+  while (usedSlugs.has(slug)) {
+    suffix += 1;
+    slug = `new-member-${suffix}`;
+  }
+
+  return {
+    slug,
+    name: '新成员',
+    role: '核心成员',
+    organization: '贵州轻工职业大学',
+    phone: '',
+    email: '',
+    direction: '',
+    certificate: '',
+    bio: '',
+    tags: [],
+    photo: '/members/zou-yan.png'
+  };
 }
 
 function cloneMember(member: Member): Member {
