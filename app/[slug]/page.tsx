@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getMemberBySlug, members } from '../data';
+import { siteName, siteUrl } from '../site';
 import { TeamPage } from '../team-page';
 
 type MemberPageProps = {
@@ -20,13 +21,36 @@ export function generateMetadata({ params }: MemberPageProps): Metadata {
     return {};
   }
 
+  const pageUrl = `${siteUrl}/${member.slug}`;
+  const imageUrl = `${siteUrl}/api/og/${member.slug}`;
+
   return {
     title: `${member.name} · 个人电子名片`,
     description: `${member.name}，${member.role}，${member.organization}。研究方向：${member.direction}。`,
+    alternates: {
+      canonical: pageUrl
+    },
     openGraph: {
       title: `${member.name} · 个人电子名片`,
       description: `${member.name}，${member.role}。${member.bio}`,
-      images: [member.photo]
+      url: pageUrl,
+      siteName,
+      locale: 'zh_CN',
+      type: 'profile',
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: `${member.name} · 个人电子名片`
+        }
+      ]
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${member.name} · 个人电子名片`,
+      description: `${member.name}，${member.role}。${member.bio}`,
+      images: [imageUrl]
     }
   };
 }

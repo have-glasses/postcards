@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { members } from '../data';
+import { members, siteContent } from '../data';
 import { AdminEditor } from './admin-editor';
 
 export const metadata: Metadata = {
@@ -11,5 +11,5 @@ export const metadata: Metadata = {
 };
 
 export default function AdminPage() {
-  return <AdminEditor initialMembers={members} />;
+  return <AdminEditor initialMembers={members} initialSiteContent={siteContent} />;
 }

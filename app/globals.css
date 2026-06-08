@@ -30,6 +30,7 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: 6.75rem;
 }
 
 body {
@@ -89,7 +90,6 @@ body {
   margin: 0 auto;
   max-width: 1280px;
   padding: 6rem 1.5rem 4rem;
-  perspective: 1200px;
 }
 
 .layout-wrap::before {
@@ -107,7 +107,7 @@ body {
     linear-gradient(90deg, rgba(103, 232, 249, 0.13) 1px, transparent 1px),
     radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.2), transparent 68%);
   background-size: 44px 44px, 44px 44px, 100% 100%;
-  transform: rotateX(69deg) translateY(-7rem) scale(1.05);
+  transform: perspective(1200px) rotateX(69deg) translateY(-7rem) scale(1.05);
   transform-origin: top center;
   mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 0.2) 60%, transparent 100%);
   filter: drop-shadow(0 20px 36px rgba(8, 47, 73, 0.45));
@@ -130,7 +130,7 @@ body {
 
 .top-nav {
   position: fixed;
-  top: 1rem;
+  top: max(0.75rem, env(safe-area-inset-top));
   left: 50%;
   z-index: 40;
   width: min(1280px - 3rem, calc(100% - 3rem));
@@ -569,6 +569,27 @@ body {
   margin-top: 1rem;
 }
 
+.admin-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+.admin-tabs button {
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.5);
+  color: #cbd5e1;
+  padding: 0.62rem 1rem;
+}
+
+.admin-tabs button.active {
+  border-color: rgba(103, 232, 249, 0.62);
+  background: rgba(8, 47, 73, 0.72);
+  color: #cffafe;
+}
+
 .danger-action {
   display: inline-flex;
   align-items: center;
@@ -650,6 +671,75 @@ body {
   gap: 0.9rem;
 }
 
+.admin-content-form {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.admin-content-form fieldset {
+  display: grid;
+  gap: 0.9rem;
+  margin: 0;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 1rem;
+  padding: 1rem;
+}
+
+.admin-content-form legend {
+  padding: 0 0.4rem;
+  color: #bae6fd;
+  font-weight: 700;
+}
+
+.admin-content-form label {
+  display: grid;
+  gap: 0.45rem;
+  color: #cbd5e1;
+  font-size: 0.86rem;
+}
+
+.admin-inline-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.admin-repeater-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  color: #e2e8f0;
+}
+
+.admin-repeater-title button,
+.admin-repeater-row button {
+  border-radius: 999px;
+  background: rgba(8, 47, 73, 0.72);
+  color: #cffafe;
+  padding: 0.52rem 0.75rem;
+}
+
+.admin-repeater-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.65fr) minmax(0, 1.4fr) auto;
+  gap: 0.6rem;
+  align-items: start;
+}
+
+.admin-repeater-row-stack textarea {
+  min-height: 2.75rem;
+}
+
+.admin-achievement-group {
+  display: grid;
+  gap: 0.75rem;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 0.85rem;
+  padding: 0.85rem;
+}
+
 .admin-form label:nth-child(7),
 .admin-form label:nth-child(8),
 .admin-form label:nth-child(9),
@@ -723,12 +813,12 @@ body {
   }
 
   .layout-wrap {
-    padding: calc(5rem + env(safe-area-inset-top)) 0.9rem calc(2.25rem + env(safe-area-inset-bottom));
+    padding: calc(5.8rem + env(safe-area-inset-top)) 0.9rem calc(2.25rem + env(safe-area-inset-bottom));
   }
 
   .top-nav {
     width: calc(100% - 1.25rem);
-    top: calc(0.55rem + env(safe-area-inset-top));
+    top: env(safe-area-inset-top);
     gap: 0.7rem;
     align-items: center;
     padding: 0.65rem 0.75rem;
@@ -895,6 +985,7 @@ body {
   .admin-header,
   .admin-login,
   .admin-actions,
+  .admin-repeater-title,
   .admin-tag-row {
     align-items: stretch;
     flex-direction: column;
@@ -923,6 +1014,11 @@ body {
   }
 
   .admin-form {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-inline-grid,
+  .admin-repeater-row {
     grid-template-columns: 1fr;
   }
 }

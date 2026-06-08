@@ -1,9 +1,10 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { achievements, members, metrics, type Member } from './data';
+import { members, siteContent, type AchievementItem, type Member } from './data';
 
 export function TeamPage({ featuredMember }: { featuredMember?: Member }) {
   const contactMember = featuredMember ?? members[0];
+  const { achievements, brand, contact, overview, sections, footer } = siteContent;
 
   return (
     <main className="page-root">
@@ -14,18 +15,18 @@ export function TeamPage({ featuredMember }: { featuredMember?: Member }) {
       <div className="layout-wrap">
         <header className="top-nav">
           <Link href="/" className="flex items-center gap-3">
-            <div className="brand-mark brand-mark-vertical">食研</div>
+            <div className="brand-mark brand-mark-vertical">{brand.mark}</div>
             <div>
-              <p className="micro-label">Guizhou Food Digital Innovation Center</p>
-              <p className="top-brand text-lg font-medium text-white md:text-xl">贵州特色食品数智化技术创新与应用研究中心</p>
+              <p className="micro-label">{brand.englishName}</p>
+              <p className="top-brand text-lg font-medium text-white md:text-xl">{brand.chineseName}</p>
             </div>
           </Link>
           <nav className="hidden items-center gap-6 text-sm text-slate-300 md:flex lg:text-base">
-            {featuredMember ? <a href="#profile" className="nav-link">名片</a> : null}
-            <a href="#overview" className="nav-link">总览</a>
-            <a href="#members" className="nav-link">成员</a>
-            <a href="#achievements" className="nav-link">成果</a>
-            <a href="#contact" className="nav-link">联系</a>
+            {featuredMember ? <a href="#profile" className="nav-link">{brand.nav.profile}</a> : null}
+            <a href="#overview" className="nav-link">{brand.nav.overview}</a>
+            <a href="#members" className="nav-link">{brand.nav.members}</a>
+            <a href="#achievements" className="nav-link">{brand.nav.achievements}</a>
+            <a href="#contact" className="nav-link">{brand.nav.contact}</a>
           </nav>
         </header>
 
@@ -35,14 +36,14 @@ export function TeamPage({ featuredMember }: { featuredMember?: Member }) {
           <div className="panel panel-hero p-8 md:p-10">
             <div className="hero-divider" aria-hidden="true" />
             <h1 className="hero-title mt-6 text-3xl font-semibold leading-tight text-white md:text-5xl">
-              <span className="title-accent title-accent-large">食品加工研发团队</span>
+              <span className="title-accent title-accent-large">{overview.title}</span>
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300 md:text-xl">
-              以数智赋能特色食品研发，以专业展示连接产业合作。
+              {overview.description}
             </p>
 
             <div className="mt-8 grid gap-4 sm:grid-cols-2">
-              {metrics.map((item) => (
+              {overview.metrics.map((item) => (
                 <div key={item.label} className="metric-card">
                   <p className="text-sm text-slate-400">{item.label}</p>
                   <p className="mt-2 text-3xl font-semibold text-white">{item.value}</p>
@@ -54,8 +55,8 @@ export function TeamPage({ featuredMember }: { featuredMember?: Member }) {
         </section>
 
         <section id="members" className="reveal-section mt-16">
-          <p className="section-kicker">Member Directory</p>
-          <h2 className="mt-2 text-3xl font-semibold text-white md:text-4xl">核心成员</h2>
+          <p className="section-kicker">{sections.membersKicker}</p>
+          <h2 className="mt-2 text-3xl font-semibold text-white md:text-4xl">{sections.membersTitle}</h2>
           <div className="mt-6 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
             {members.map((member) => (
               <MemberCard key={member.slug} member={member} isActive={member.slug === featuredMember?.slug} />
@@ -64,47 +65,47 @@ export function TeamPage({ featuredMember }: { featuredMember?: Member }) {
         </section>
 
         <section id="achievements" className="panel reveal-section mt-16 p-7">
-          <p className="section-kicker">Research & Delivery</p>
-          <h3 className="mt-2 text-3xl font-semibold text-white">团队成果 / 论文 / 项目案例</h3>
+          <p className="section-kicker">{sections.achievementsKicker}</p>
+          <h3 className="mt-2 text-3xl font-semibold text-white">{sections.achievementsTitle}</h3>
           <div className="mt-7 grid gap-5 lg:grid-cols-3">
-            <CategoryCard title="论文成果" items={achievements.papers} itemKey="venue" />
-            <CategoryCard title="项目成果" items={achievements.projects} itemKey="desc" />
-            <CategoryCard title="案例价值" items={achievements.cases} itemKey="impact" />
+            <CategoryCard title={achievements.papersTitle} items={achievements.papers} itemKey="venue" />
+            <CategoryCard title={achievements.projectsTitle} items={achievements.projects} itemKey="desc" />
+            <CategoryCard title={achievements.casesTitle} items={achievements.cases} itemKey="impact" />
           </div>
         </section>
 
         <section id="contact" className="panel reveal-section mt-16 p-7">
-          <p className="section-kicker">Contact</p>
-          <h3 className="mt-2 text-3xl font-semibold text-white">合作与联系</h3>
+          <p className="section-kicker">{sections.contactKicker}</p>
+          <h3 className="mt-2 text-3xl font-semibold text-white">{sections.contactTitle}</h3>
           <p className="mt-4 text-sm leading-7 text-slate-300">
-            如需进一步了解团队建设、成果展示或合作对接，欢迎随时联系交流。
+            {contact.description}
           </p>
           <div className="mt-6 grid gap-4">
             <div className="sub-card p-4">
-              <p className="text-xs text-slate-400">邮箱</p>
+              <p className="text-xs text-slate-400">{contact.emailLabel}</p>
               <p className="mt-1 text-sm text-white">{contactMember.email}</p>
             </div>
             <div className="sub-card p-4">
-              <p className="text-xs text-slate-400">电话</p>
+              <p className="text-xs text-slate-400">{contact.phoneLabel}</p>
               <p className="mt-1 text-sm text-white">{contactMember.phone}</p>
             </div>
             <div className="sub-card p-4">
-              <p className="text-xs text-slate-400">地址</p>
-              <p className="mt-1 text-sm text-white">贵州省贵阳市贵安新区云安路1号</p>
+              <p className="text-xs text-slate-400">{contact.addressLabel}</p>
+              <p className="mt-1 text-sm text-white">{contact.address}</p>
             </div>
           </div>
         </section>
 
         <footer className="panel reveal-section mt-16 flex flex-col gap-6 px-6 py-8 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="section-kicker">Team Brand Footer</p>
-            <p className="mt-2 text-sm text-slate-300">Team Showcase © 2026 · Built for premium external presentation.</p>
+            <p className="section-kicker">{footer.kicker}</p>
+            <p className="mt-2 text-sm text-slate-300">{footer.text}</p>
           </div>
           <div className="flex flex-wrap gap-4 text-sm text-slate-300">
-            <a href="#overview" className="nav-link">总览</a>
-            <a href="#members" className="nav-link">成员</a>
-            <a href="#achievements" className="nav-link">成果</a>
-            <a href="#contact" className="nav-link">联系</a>
+            <a href="#overview" className="nav-link">{brand.nav.overview}</a>
+            <a href="#members" className="nav-link">{brand.nav.members}</a>
+            <a href="#achievements" className="nav-link">{brand.nav.achievements}</a>
+            <a href="#contact" className="nav-link">{brand.nav.contact}</a>
           </div>
         </footer>
       </div>
@@ -212,7 +213,7 @@ function CategoryCard({
   itemKey
 }: {
   title: string;
-  items: Array<{ title: string; [key: string]: string }>;
+  items: AchievementItem[];
   itemKey: 'venue' | 'desc' | 'impact';
 }) {
   return (

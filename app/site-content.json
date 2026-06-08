@@ -1,0 +1,95 @@
+{
+  "brand": {
+    "mark": "食研",
+    "englishName": "Guizhou Food Digital Innovation Center",
+    "chineseName": "贵州特色食品数智化技术创新与应用研究中心",
+    "nav": {
+      "profile": "名片",
+      "overview": "总览",
+      "members": "成员",
+      "achievements": "成果",
+      "contact": "联系"
+    }
+  },
+  "overview": {
+    "title": "食品加工研发团队",
+    "description": "以数智赋能特色食品研发，以专业展示连接产业合作。",
+    "metrics": [
+      {
+        "label": "团队成员",
+        "value": "7",
+        "detail": "核心成员展示"
+      },
+      {
+        "label": "研究方向",
+        "value": "8+",
+        "detail": "特色食品、饮品研发、白酒、发酵微生物等"
+      },
+      {
+        "label": "专业证书",
+        "value": "28",
+        "detail": "技术与管理双向认证"
+      }
+    ]
+  },
+  "sections": {
+    "membersKicker": "Member Directory",
+    "membersTitle": "核心成员",
+    "achievementsKicker": "Research & Delivery",
+    "achievementsTitle": "团队成果 / 论文 / 项目案例",
+    "contactKicker": "Contact",
+    "contactTitle": "合作与联系"
+  },
+  "achievements": {
+    "papersTitle": "论文成果",
+    "projectsTitle": "项目成果",
+    "casesTitle": "案例价值",
+    "papers": [
+      {
+        "title": "利用乙酸协同氢化钙提升马铃薯片热加工质构特性",
+        "venue": "Modern Food Science and Technology, 2022, 38(4):140-146+200",
+        "tag": "论文"
+      },
+      {
+        "title": "辛烯基琥珀酸芡荞糊精酥自聚集特性研究",
+        "venue": "食品科学, 2023, 44(7): 237-242",
+        "tag": "论文"
+      }
+    ],
+    "projects": [
+      {
+        "title": "贵州轻工职业技术学院专利成果",
+        "desc": "一种白酒在线检测装置，授权公告号 CN212748439U",
+        "tag": "专利"
+      },
+      {
+        "title": "科研成果产学研转化",
+        "desc": "围绕特色食品加工、品质提升与技术转化开展联合研究。",
+        "tag": "成果转化"
+      }
+    ],
+    "cases": [
+      {
+        "title": "校企联合科研项目",
+        "impact": "推动特色食品工艺优化与产品性能提升，形成可落地技术方案。",
+        "tag": "案例"
+      },
+      {
+        "title": "应用研究与专利布局",
+        "impact": "围绕检测、加工与质量控制形成论文与专利协同成果。",
+        "tag": "案例"
+      }
+    ]
+  },
+  "contact": {
+    "description": "如需进一步了解团队建设、成果展示或合作对接，欢迎随时联系交流。",
+    "emailLabel": "邮箱",
+    "phoneLabel": "电话",
+    "addressLabel": "地址",
+    "address": "贵州省贵阳市贵安新区云安路1号"
+  },
+  "footer": {
+    "kicker": "Team Brand Footer",
+    "text": "Team Showcase © 2026 · Built for premium external presentation."
+  }
+}

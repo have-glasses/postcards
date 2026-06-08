@@ -1,6 +1,7 @@
 import './globals.css';
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
+import { siteName, siteUrl } from './site';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -9,10 +10,10 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://team-showcase.vercel.app'),
+  metadataBase: new URL(siteUrl),
   title: {
-    default: '贵州特色食品数智化技术创新与应用研究中心 · 食品加工研发团队',
-    template: '%s | 贵州特色食品数智化技术创新与应用研究中心'
+    default: `${siteName} · 食品加工研发团队`,
+    template: `%s | ${siteName}`
   },
   description:
     '贵州特色食品数智化技术创新与应用研究中心食品加工研发团队官网，展示成员信息、研究方向、项目成果、论文与案例。地址：贵州省贵阳市贵安新区云安路1号。',
@@ -25,16 +26,16 @@ export const metadata: Metadata = {
     '项目成果展示'
   ],
   openGraph: {
-    title: '贵州特色食品数智化技术创新与应用研究中心 · 食品加工研发团队',
+    title: `${siteName} · 食品加工研发团队`,
     description: '展示团队成员、研究方向、项目成果与案例的高质感官网。地址：贵州省贵阳市贵安新区云安路1号。',
-    url: 'https://team-showcase.vercel.app',
-    siteName: 'Team Portfolio',
+    url: siteUrl,
+    siteName,
     locale: 'zh_CN',
     type: 'website'
   },
   twitter: {
     card: 'summary_large_image',
-    title: '贵州特色食品数智化技术创新与应用研究中心 · 食品加工研发团队',
+    title: `${siteName} · 食品加工研发团队`,
     description: '高质感团队展示网站，适合科研团队对外品牌展示与成果传播。'
   },
   robots: {
@@ -42,7 +43,7 @@ export const metadata: Metadata = {
     follow: true
   },
   alternates: {
-    canonical: 'https://team-showcase.vercel.app'
+    canonical: siteUrl
   }
 };
 

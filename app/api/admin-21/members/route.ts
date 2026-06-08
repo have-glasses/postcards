@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import { createHash, timingSafeEqual } from 'crypto';
-import type { Member } from '../../../data';
+import type { AchievementItem, Member, Metric, SiteContent } from '../../../data';
 
 export const runtime = 'nodejs';
 
 const MEMBERS_PATH = 'app/members.json';
+const SITE_CONTENT_PATH = 'app/site-content.json';
 const MEMBER_PHOTO_DIR = 'public/members';
 
 type PhotoUpload = {
@@ -16,6 +17,7 @@ type PhotoUpload = {
 type SaveRequest = {
   password?: string;
   members?: unknown;
+  siteContent?: unknown;
   photos?: unknown;
 };
 
@@ -86,6 +88,164 @@ function normalizeMembers(value: unknown) {
     tags: member.tags.map((tag) => tag.trim()).filter(Boolean),
     photo: member.photo.trim()
   }));
+}
+
+function isText(value: unknown) {
+  return typeof value === 'string';
+}
+
+function normalizeMetric(value: unknown): Metric {
+  if (!value || typeof value !== 'object') {
+    throw new Error('统计指标格式不正确');
+  }
+
+  const item = value as Record<string, unknown>;
+
+  if (!isText(item.label) || !isText(item.value) || !isText(item.detail)) {
+    throw new Error('统计指标格式不正确');
+  }
+
+  return {
+    label: item.label.trim(),
+    value: item.value.trim(),
+    detail: item.detail.trim()
+  };
+}
+
+function normalizeAchievementItem(value: unknown, detailKey: 'venue' | 'desc' | 'impact'): AchievementItem {
+  if (!value || typeof value !== 'object') {
+    throw new Error('成果条目格式不正确');
+  }
+
+  const item = value as Record<string, unknown>;
+
+  if (!isText(item.title) || !isText(item.tag) || !isText(item[detailKey])) {
+    throw new Error('成果条目格式不正确');
+  }
+
+  return {
+    title: item.title.trim(),
+    tag: item.tag.trim(),
+    [detailKey]: item[detailKey].trim()
+  };
+}
+
+function normalizeAchievementList(value: unknown, detailKey: 'venue' | 'desc' | 'impact') {
+  if (!Array.isArray(value)) {
+    throw new Error('成果列表格式不正确');
+  }
+
+  return value.map((item) => normalizeAchievementItem(item, detailKey));
+}
+
+function normalizeSiteContent(value: unknown): SiteContent | null {
+  if (value === undefined) {
+    return null;
+  }
+
+  if (!value || typeof value !== 'object') {
+    throw new Error('页面内容格式不正确');
+  }
+
+  const content = value as Record<string, any>;
+
+  if (
+    !content.brand ||
+    !content.brand.nav ||
+    !content.overview ||
+    !content.sections ||
+    !content.achievements ||
+    !content.contact ||
+    !content.footer
+  ) {
+    throw new Error('页面内容格式不正确');
+  }
+
+  const nav = content.brand.nav as Record<string, unknown>;
+  const overview = content.overview as Record<string, unknown>;
+  const sections = content.sections as Record<string, unknown>;
+  const achievements = content.achievements as Record<string, unknown>;
+  const contact = content.contact as Record<string, unknown>;
+  const footer = content.footer as Record<string, unknown>;
+
+  if (
+    !isText(content.brand.mark) ||
+    !isText(content.brand.englishName) ||
+    !isText(content.brand.chineseName) ||
+    !isText(nav.profile) ||
+    !isText(nav.overview) ||
+    !isText(nav.members) ||
+    !isText(nav.achievements) ||
+    !isText(nav.contact) ||
+    !isText(overview.title) ||
+    !isText(overview.description) ||
+    !Array.isArray(overview.metrics) ||
+    !isText(sections.membersKicker) ||
+    !isText(sections.membersTitle) ||
+    !isText(sections.achievementsKicker) ||
+    !isText(sections.achievementsTitle) ||
+    !isText(sections.contactKicker) ||
+    !isText(sections.contactTitle) ||
+    !isText(achievements.papersTitle) ||
+    !isText(achievements.projectsTitle) ||
+    !isText(achievements.casesTitle) ||
+    !isText(contact.description) ||
+    !isText(contact.emailLabel) ||
+    !isText(contact.phoneLabel) ||
+    !isText(contact.addressLabel) ||
+    !isText(contact.address) ||
+    !isText(footer.kicker) ||
+    !isText(footer.text)
+  ) {
+    throw new Error('页面内容格式不正确');
+  }
+
+  return {
+    brand: {
+      mark: content.brand.mark.trim(),
+      englishName: content.brand.englishName.trim(),
+      chineseName: content.brand.chineseName.trim(),
+      nav: {
+        profile: nav.profile.trim(),
+        overview: nav.overview.trim(),
+        members: nav.members.trim(),
+        achievements: nav.achievements.trim(),
+        contact: nav.contact.trim()
+      }
+    },
+    overview: {
+      title: overview.title.trim(),
+      description: overview.description.trim(),
+      metrics: overview.metrics.map(normalizeMetric)
+    },
+    sections: {
+      membersKicker: sections.membersKicker.trim(),
+      membersTitle: sections.membersTitle.trim(),
+      achievementsKicker: sections.achievementsKicker.trim(),
+      achievementsTitle: sections.achievementsTitle.trim(),
+      contactKicker: sections.contactKicker.trim(),
+      contactTitle: sections.contactTitle.trim()
+    },
+    achievements: {
+      papersTitle: achievements.papersTitle.trim(),
+      projectsTitle: achievements.projectsTitle.trim(),
+      casesTitle: achievements.casesTitle.trim(),
+      papers: normalizeAchievementList(achievements.papers, 'venue') as Array<AchievementItem & { venue: string }>,
+      projects: normalizeAchievementList(achievements.projects, 'desc') as Array<AchievementItem & { desc: string }>,
+      cases: normalizeAchievementList(achievements.cases, 'impact') as Array<AchievementItem & { impact: string }>
+    },
+    contact: {
+      description: contact.description.trim(),
+      emailLabel: contact.emailLabel.trim(),
+      phoneLabel: contact.phoneLabel.trim(),
+      addressLabel: contact.addressLabel.trim(),
+      address: contact.address.trim()
+    },
+    footer: {
+      kicker: footer.kicker.trim(),
+      text: footer.text.trim()
+    }
+  };
 }
 
 function normalizePhotos(value: unknown) {
@@ -245,9 +405,11 @@ export async function POST(request: Request) {
 
   let normalizedMembers: Member[];
   let normalizedPhotos: PhotoUpload[];
+  let normalizedSiteContent: SiteContent | null;
 
   try {
     normalizedMembers = normalizeMembers(body.members);
+    normalizedSiteContent = normalizeSiteContent(body.siteContent);
     normalizedPhotos = normalizePhotos(body.photos);
     const memberPhotoPaths = new Set(normalizedMembers.map((member) => member.photo));
 
@@ -278,20 +440,33 @@ export async function POST(request: Request) {
       });
     }
 
-    const content = `${JSON.stringify(normalizedMembers, null, 2)}\n`;
-    const result = await updateGitHubFile({
+    const memberContent = `${JSON.stringify(normalizedMembers, null, 2)}\n`;
+    const memberResult = await updateGitHubFile({
       branch,
-      content: Buffer.from(content, 'utf8').toString('base64'),
+      content: Buffer.from(memberContent, 'utf8').toString('base64'),
       message: 'Update member card data',
       path: MEMBERS_PATH,
       repository,
       token
     });
+    let siteContentResult = null;
+
+    if (normalizedSiteContent) {
+      const siteContent = `${JSON.stringify(normalizedSiteContent, null, 2)}\n`;
+      siteContentResult = await updateGitHubFile({
+        branch,
+        content: Buffer.from(siteContent, 'utf8').toString('base64'),
+        message: 'Update site content',
+        path: SITE_CONTENT_PATH,
+        repository,
+        token
+      });
+    }
 
     return NextResponse.json({
       ok: true,
       uploadedFiles,
-      commit: result.commit?.sha ?? null
+      commit: siteContentResult?.commit?.sha ?? memberResult.commit?.sha ?? null
     });
   } catch (error) {
     return NextResponse.json(

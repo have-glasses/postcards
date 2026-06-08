@@ -1,7 +1,8 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import type { Member } from '../data';
+import type { Dispatch, SetStateAction } from 'react';
+import type { AchievementItem, Member, Metric, SiteContent } from '../data';
 
 type SaveState = {
   status: 'idle' | 'saving' | 'success' | 'error';
@@ -13,6 +14,9 @@ type PendingPhoto = {
   filename: string;
   path: string;
 };
+
+type AdminTab = 'members' | 'content';
+type AchievementGroup = 'papers' | 'projects' | 'cases';
 
 const editableFields: Array<{ key: keyof Omit<Member, 'tags'>; label: string; multiline?: boolean }> = [
   { key: 'slug', label: '链接标识' },
@@ -27,12 +31,26 @@ const editableFields: Array<{ key: keyof Omit<Member, 'tags'>; label: string; mu
   { key: 'photo', label: '照片路径' }
 ];
 
-export function AdminEditor({ initialMembers }: { initialMembers: Member[] }) {
+const achievementConfig: Record<AchievementGroup, { titleKey: 'papersTitle' | 'projectsTitle' | 'casesTitle'; label: string; detailKey: 'venue' | 'desc' | 'impact'; detailLabel: string }> = {
+  papers: { titleKey: 'papersTitle', label: '论文成果', detailKey: 'venue', detailLabel: '期刊 / 来源' },
+  projects: { titleKey: 'projectsTitle', label: '项目成果', detailKey: 'desc', detailLabel: '描述' },
+  cases: { titleKey: 'casesTitle', label: '案例价值', detailKey: 'impact', detailLabel: '价值 / 影响' }
+};
+
+export function AdminEditor({
+  initialMembers,
+  initialSiteContent
+}: {
+  initialMembers: Member[];
+  initialSiteContent: SiteContent;
+}) {
   const [password, setPassword] = useState('');
   const [members, setMembers] = useState<Member[]>(() => initialMembers.map(cloneMember));
+  const [siteContent, setSiteContent] = useState<SiteContent>(() => cloneSiteContent(initialSiteContent));
   const [pendingPhotos, setPendingPhotos] = useState<Record<string, PendingPhoto>>({});
   const [saveState, setSaveState] = useState<SaveState>({ status: 'idle', message: '' });
   const [activeSlug, setActiveSlug] = useState(initialMembers[0]?.slug ?? '');
+  const [activeTab, setActiveTab] = useState<AdminTab>('members');
 
   const activeMember = useMemo(
     () => members.find((member) => member.slug === activeSlug) ?? members[0],
@@ -86,6 +104,7 @@ export function AdminEditor({ initialMembers }: { initialMembers: Member[] }) {
 
     setMembers((currentMembers) => [...currentMembers, member]);
     setActiveSlug(member.slug);
+    setActiveTab('members');
     setSaveState({ status: 'idle', message: '' });
   }
 
@@ -154,7 +173,7 @@ export function AdminEditor({ initialMembers }: { initialMembers: Member[] }) {
     setSaveState({ status: 'idle', message: '' });
   }
 
-  async function saveMembers() {
+  async function saveAll() {
     setSaveState({ status: 'saving', message: '保存中...' });
 
     try {
@@ -163,7 +182,7 @@ export function AdminEditor({ initialMembers }: { initialMembers: Member[] }) {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ password, members, photos: Object.values(pendingPhotos) })
+        body: JSON.stringify({ password, members, siteContent, photos: Object.values(pendingPhotos) })
       });
 
       const result = await response.json();
@@ -191,7 +210,7 @@ export function AdminEditor({ initialMembers }: { initialMembers: Member[] }) {
         <div className="admin-header">
           <div>
             <p className="section-kicker">Admin</p>
-            <h1>成员编辑</h1>
+            <h1>内容编辑</h1>
           </div>
           <a href="/" className="secondary-action">返回首页</a>
         </div>
@@ -206,93 +225,334 @@ export function AdminEditor({ initialMembers }: { initialMembers: Member[] }) {
               autoComplete="current-password"
             />
           </label>
-          <button className="primary-action" type="button" onClick={saveMembers} disabled={saveState.status === 'saving'}>
+          <button className="primary-action" type="button" onClick={saveAll} disabled={saveState.status === 'saving'}>
             {saveState.status === 'saving' ? '保存中' : '保存'}
           </button>
         </div>
 
         {saveState.message ? <p className={`admin-status admin-status-${saveState.status}`}>{saveState.message}</p> : null}
 
-        <div className="admin-actions">
-          <button type="button" className="secondary-action" onClick={addMember}>新增成员</button>
-          <button type="button" className="danger-action" onClick={removeActiveMember} disabled={!activeMember}>
-            删除当前成员
+        <div className="admin-tabs">
+          <button type="button" className={activeTab === 'members' ? 'active' : ''} onClick={() => setActiveTab('members')}>
+            成员信息
+          </button>
+          <button type="button" className={activeTab === 'content' ? 'active' : ''} onClick={() => setActiveTab('content')}>
+            页面内容
           </button>
         </div>
 
-        <div className="admin-layout">
-          <aside className="admin-member-list">
-            {members.map((member, index) => (
-              <button
-                key={`${member.slug}-${index}`}
-                type="button"
-                className={member.slug === activeMember?.slug ? 'active' : ''}
-                onClick={() => setActiveSlug(member.slug)}
-              >
-                <span>{member.name || '未命名成员'}</span>
-                <small>/{member.slug}</small>
+        {activeTab === 'members' ? (
+          <>
+            <div className="admin-actions">
+              <button type="button" className="secondary-action" onClick={addMember}>新增成员</button>
+              <button type="button" className="danger-action" onClick={removeActiveMember} disabled={!activeMember}>
+                删除当前成员
               </button>
-            ))}
-          </aside>
-
-          {activeMember ? (
-            <div className="admin-form">
-              {editableFields.map((field) => (
-                <label key={field.key}>
-                  {field.label}
-                  {field.multiline ? (
-                    <textarea
-                      value={String(activeMember[field.key])}
-                      onChange={(event) =>
-                        updateMember(activeMember.slug, { [field.key]: event.target.value } as Partial<Member>)
-                      }
-                    />
-                  ) : (
-                    <input
-                      value={String(activeMember[field.key])}
-                      onChange={(event) =>
-                        updateMember(activeMember.slug, { [field.key]: event.target.value } as Partial<Member>)
-                      }
-                    />
-                  )}
-                  {field.key === 'slug' ? (
-                    <small className="admin-field-help">不能重复；建议使用小写英文、数字和短横线，例如 li-yang。</small>
-                  ) : null}
-                </label>
-              ))}
-
-              <div className="admin-photo-upload">
-                <div>
-                  <p>上传照片</p>
-                  <small>选择 png、jpg、jpeg 或 webp，保存后自动同步为当前照片路径。</small>
-                </div>
-                <input
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp"
-                  onChange={(event) => uploadPhoto(activeMember.slug, event.target.files?.[0] ?? null)}
-                />
-                {pendingPhotos[activeMember.slug] ? (
-                  <small className="admin-field-help">待保存：{pendingPhotos[activeMember.slug].path}</small>
-                ) : null}
-              </div>
-
-              <div className="admin-tags">
-                <div className="admin-tags-title">
-                  <span>标签</span>
-                  <button type="button" onClick={() => addTag(activeMember.slug)}>增加标签</button>
-                </div>
-                {activeMember.tags.map((tag, index) => (
-                  <div key={`${activeMember.slug}-${index}`} className="admin-tag-row">
-                    <input value={tag} onChange={(event) => updateTag(activeMember.slug, index, event.target.value)} />
-                    <button type="button" onClick={() => removeTag(activeMember.slug, index)}>删除</button>
-                  </div>
-                ))}
-              </div>
             </div>
-          ) : null}
-        </div>
+
+            <div className="admin-layout">
+              <aside className="admin-member-list">
+                {members.map((member, index) => (
+                  <button
+                    key={`${member.slug}-${index}`}
+                    type="button"
+                    className={member.slug === activeMember?.slug ? 'active' : ''}
+                    onClick={() => setActiveSlug(member.slug)}
+                  >
+                    <span>{member.name || '未命名成员'}</span>
+                    <small>/{member.slug}</small>
+                  </button>
+                ))}
+              </aside>
+
+              {activeMember ? (
+                <div className="admin-form">
+                  {editableFields.map((field) => (
+                    <label key={field.key}>
+                      {field.label}
+                      {field.multiline ? (
+                        <textarea
+                          value={String(activeMember[field.key])}
+                          onChange={(event) =>
+                            updateMember(activeMember.slug, { [field.key]: event.target.value } as Partial<Member>)
+                          }
+                        />
+                      ) : (
+                        <input
+                          value={String(activeMember[field.key])}
+                          onChange={(event) =>
+                            updateMember(activeMember.slug, { [field.key]: event.target.value } as Partial<Member>)
+                          }
+                        />
+                      )}
+                      {field.key === 'slug' ? (
+                        <small className="admin-field-help">不能重复；建议使用小写英文、数字和短横线，例如 li-yang。</small>
+                      ) : null}
+                    </label>
+                  ))}
+
+                  <div className="admin-photo-upload">
+                    <div>
+                      <p>上传照片</p>
+                      <small>选择 png、jpg、jpeg 或 webp，保存后自动同步为当前照片路径。</small>
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      onChange={(event) => uploadPhoto(activeMember.slug, event.target.files?.[0] ?? null)}
+                    />
+                    {pendingPhotos[activeMember.slug] ? (
+                      <small className="admin-field-help">待保存：{pendingPhotos[activeMember.slug].path}</small>
+                    ) : null}
+                  </div>
+
+                  <div className="admin-tags">
+                    <div className="admin-tags-title">
+                      <span>标签</span>
+                      <button type="button" onClick={() => addTag(activeMember.slug)}>增加标签</button>
+                    </div>
+                    {activeMember.tags.map((tag, index) => (
+                      <div key={`${activeMember.slug}-${index}`} className="admin-tag-row">
+                        <input value={tag} onChange={(event) => updateTag(activeMember.slug, index, event.target.value)} />
+                        <button type="button" onClick={() => removeTag(activeMember.slug, index)}>删除</button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </>
+        ) : (
+          <SiteContentEditor siteContent={siteContent} setSiteContent={setSiteContent} />
+        )}
       </section>
     </main>
+  );
+}
+
+function SiteContentEditor({
+  siteContent,
+  setSiteContent
+}: {
+  siteContent: SiteContent;
+  setSiteContent: Dispatch<SetStateAction<SiteContent>>;
+}) {
+  function updateContent(updater: (content: SiteContent) => SiteContent) {
+    setSiteContent((current) => updater(cloneSiteContent(current)));
+  }
+
+  function updateMetric(index: number, patch: Partial<Metric>) {
+    updateContent((content) => {
+      content.overview.metrics[index] = { ...content.overview.metrics[index], ...patch };
+      return content;
+    });
+  }
+
+  function addMetric() {
+    updateContent((content) => {
+      content.overview.metrics.push({ label: '新指标', value: '', detail: '' });
+      return content;
+    });
+  }
+
+  function removeMetric(index: number) {
+    updateContent((content) => {
+      content.overview.metrics = content.overview.metrics.filter((_, metricIndex) => metricIndex !== index);
+      return content;
+    });
+  }
+
+  function updateAchievement(group: AchievementGroup, index: number, patch: Partial<AchievementItem>) {
+    updateContent((content) => {
+      const items = [...content.achievements[group]];
+      items[index] = { ...items[index], ...patch } as never;
+      content.achievements[group] = items as never;
+      return content;
+    });
+  }
+
+  function addAchievement(group: AchievementGroup) {
+    const { detailKey } = achievementConfig[group];
+
+    updateContent((content) => {
+      const item = { title: '新条目', tag: '', [detailKey]: '' };
+      content.achievements[group] = [...content.achievements[group], item] as never;
+      return content;
+    });
+  }
+
+  function removeAchievement(group: AchievementGroup, index: number) {
+    updateContent((content) => {
+      content.achievements[group] = content.achievements[group].filter((_, itemIndex) => itemIndex !== index) as never;
+      return content;
+    });
+  }
+
+  return (
+    <div className="admin-content-form">
+      <fieldset>
+        <legend>顶部栏</legend>
+        <label>
+          左侧标识
+          <input value={siteContent.brand.mark} onChange={(event) => updateContent((content) => ({ ...content, brand: { ...content.brand, mark: event.target.value } }))} />
+        </label>
+        <label>
+          英文名称
+          <input value={siteContent.brand.englishName} onChange={(event) => updateContent((content) => ({ ...content, brand: { ...content.brand, englishName: event.target.value } }))} />
+        </label>
+        <label>
+          中文名称
+          <input value={siteContent.brand.chineseName} onChange={(event) => updateContent((content) => ({ ...content, brand: { ...content.brand, chineseName: event.target.value } }))} />
+        </label>
+        <div className="admin-inline-grid">
+          {Object.entries(siteContent.brand.nav).map(([key, value]) => (
+            <label key={key}>
+              导航：{navLabel(key)}
+              <input
+                value={value}
+                onChange={(event) =>
+                  updateContent((content) => ({
+                    ...content,
+                    brand: {
+                      ...content.brand,
+                      nav: { ...content.brand.nav, [key]: event.target.value }
+                    }
+                  }))
+                }
+              />
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>总览</legend>
+        <label>
+          大标题
+          <input value={siteContent.overview.title} onChange={(event) => updateContent((content) => ({ ...content, overview: { ...content.overview, title: event.target.value } }))} />
+        </label>
+        <label>
+          副标题
+          <textarea value={siteContent.overview.description} onChange={(event) => updateContent((content) => ({ ...content, overview: { ...content.overview, description: event.target.value } }))} />
+        </label>
+        <div className="admin-repeater-title">
+          <span>统计指标</span>
+          <button type="button" onClick={addMetric}>新增指标</button>
+        </div>
+        {siteContent.overview.metrics.map((metric, index) => (
+          <div key={`${metric.label}-${index}`} className="admin-repeater-row">
+            <input value={metric.label} placeholder="名称" onChange={(event) => updateMetric(index, { label: event.target.value })} />
+            <input value={metric.value} placeholder="数值" onChange={(event) => updateMetric(index, { value: event.target.value })} />
+            <input value={metric.detail} placeholder="说明" onChange={(event) => updateMetric(index, { detail: event.target.value })} />
+            <button type="button" onClick={() => removeMetric(index)}>删除</button>
+          </div>
+        ))}
+      </fieldset>
+
+      <fieldset>
+        <legend>分区标题</legend>
+        <div className="admin-inline-grid">
+          <label>
+            成员英文小标题
+            <input value={siteContent.sections.membersKicker} onChange={(event) => updateContent((content) => ({ ...content, sections: { ...content.sections, membersKicker: event.target.value } }))} />
+          </label>
+          <label>
+            成员标题
+            <input value={siteContent.sections.membersTitle} onChange={(event) => updateContent((content) => ({ ...content, sections: { ...content.sections, membersTitle: event.target.value } }))} />
+          </label>
+          <label>
+            成果英文小标题
+            <input value={siteContent.sections.achievementsKicker} onChange={(event) => updateContent((content) => ({ ...content, sections: { ...content.sections, achievementsKicker: event.target.value } }))} />
+          </label>
+          <label>
+            成果标题
+            <input value={siteContent.sections.achievementsTitle} onChange={(event) => updateContent((content) => ({ ...content, sections: { ...content.sections, achievementsTitle: event.target.value } }))} />
+          </label>
+          <label>
+            联系英文小标题
+            <input value={siteContent.sections.contactKicker} onChange={(event) => updateContent((content) => ({ ...content, sections: { ...content.sections, contactKicker: event.target.value } }))} />
+          </label>
+          <label>
+            联系标题
+            <input value={siteContent.sections.contactTitle} onChange={(event) => updateContent((content) => ({ ...content, sections: { ...content.sections, contactTitle: event.target.value } }))} />
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>团队成果</legend>
+        {(['papers', 'projects', 'cases'] as AchievementGroup[]).map((group) => {
+          const config = achievementConfig[group];
+
+          return (
+            <div key={group} className="admin-achievement-group">
+              <label>
+                {config.label}标题
+                <input
+                  value={siteContent.achievements[config.titleKey]}
+                  onChange={(event) =>
+                    updateContent((content) => ({
+                      ...content,
+                      achievements: { ...content.achievements, [config.titleKey]: event.target.value }
+                    }))
+                  }
+                />
+              </label>
+              <div className="admin-repeater-title">
+                <span>{config.label}条目</span>
+                <button type="button" onClick={() => addAchievement(group)}>新增条目</button>
+              </div>
+              {siteContent.achievements[group].map((item, index) => (
+                <div key={`${item.title}-${index}`} className="admin-repeater-row admin-repeater-row-stack">
+                  <input value={item.title} placeholder="标题" onChange={(event) => updateAchievement(group, index, { title: event.target.value })} />
+                  <input value={item.tag} placeholder="标签" onChange={(event) => updateAchievement(group, index, { tag: event.target.value })} />
+                  <textarea value={String(item[config.detailKey] ?? '')} placeholder={config.detailLabel} onChange={(event) => updateAchievement(group, index, { [config.detailKey]: event.target.value })} />
+                  <button type="button" onClick={() => removeAchievement(group, index)}>删除</button>
+                </div>
+              ))}
+            </div>
+          );
+        })}
+      </fieldset>
+
+      <fieldset>
+        <legend>合作联系</legend>
+        <label>
+          联系说明
+          <textarea value={siteContent.contact.description} onChange={(event) => updateContent((content) => ({ ...content, contact: { ...content.contact, description: event.target.value } }))} />
+        </label>
+        <div className="admin-inline-grid">
+          <label>
+            邮箱标签
+            <input value={siteContent.contact.emailLabel} onChange={(event) => updateContent((content) => ({ ...content, contact: { ...content.contact, emailLabel: event.target.value } }))} />
+          </label>
+          <label>
+            电话标签
+            <input value={siteContent.contact.phoneLabel} onChange={(event) => updateContent((content) => ({ ...content, contact: { ...content.contact, phoneLabel: event.target.value } }))} />
+          </label>
+          <label>
+            地址标签
+            <input value={siteContent.contact.addressLabel} onChange={(event) => updateContent((content) => ({ ...content, contact: { ...content.contact, addressLabel: event.target.value } }))} />
+          </label>
+          <label>
+            地址
+            <input value={siteContent.contact.address} onChange={(event) => updateContent((content) => ({ ...content, contact: { ...content.contact, address: event.target.value } }))} />
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>页脚</legend>
+        <label>
+          页脚小标题
+          <input value={siteContent.footer.kicker} onChange={(event) => updateContent((content) => ({ ...content, footer: { ...content.footer, kicker: event.target.value } }))} />
+        </label>
+        <label>
+          页脚文字
+          <input value={siteContent.footer.text} onChange={(event) => updateContent((content) => ({ ...content, footer: { ...content.footer, text: event.target.value } }))} />
+        </label>
+      </fieldset>
+    </div>
   );
 }
 
@@ -344,7 +604,7 @@ function createBlankMember(existingMembers: Member[]): Member {
     slug,
     name: '新成员',
     role: '核心成员',
-    organization: '贵州轻工职业大学',
+    organization: '贵州轻工职业技术大学',
     phone: '',
     email: '',
     direction: '',
@@ -360,4 +620,20 @@ function cloneMember(member: Member): Member {
     ...member,
     tags: [...member.tags]
   };
+}
+
+function cloneSiteContent(content: SiteContent): SiteContent {
+  return JSON.parse(JSON.stringify(content)) as SiteContent;
+}
+
+function navLabel(key: string) {
+  const labels: Record<string, string> = {
+    profile: '名片',
+    overview: '总览',
+    members: '成员',
+    achievements: '成果',
+    contact: '联系'
+  };
+
+  return labels[key] ?? key;
 }
