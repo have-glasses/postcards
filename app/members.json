@@ -120,5 +120,21 @@
       "食品检测"
     ],
     "photo": "/members/li-ying.png"
+  },
+  {
+    "slug": "new-member-8",
+    "name": "新成员",
+    "role": "核心成员",
+    "organization": "贵州轻工职业技术大学",
+    "phone": "19885220148",
+    "email": "19885220148@139.com",
+    "direction": "1",
+    "certificate": "11",
+    "bio": "111",
+    "tags": [
+      "21",
+      "22"
+    ],
+    "photo": "/members/new-member-8.jpg"
   }
 ]
