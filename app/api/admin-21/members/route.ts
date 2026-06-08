@@ -5,10 +5,18 @@ import type { Member } from '../../../data';
 export const runtime = 'nodejs';
 
 const MEMBERS_PATH = 'app/members.json';
+const MEMBER_PHOTO_DIR = 'public/members';
+
+type PhotoUpload = {
+  content: string;
+  filename: string;
+  path: string;
+};
 
 type SaveRequest = {
   password?: string;
   members?: unknown;
+  photos?: unknown;
 };
 
 function hashValue(value: string) {
@@ -80,6 +88,56 @@ function normalizeMembers(value: unknown) {
   }));
 }
 
+function normalizePhotos(value: unknown) {
+  if (value === undefined) {
+    return [];
+  }
+
+  if (!Array.isArray(value)) {
+    throw new Error('照片数据格式不正确');
+  }
+
+  return value.map((photo) => {
+    if (!photo || typeof photo !== 'object') {
+      throw new Error('照片数据格式不正确');
+    }
+
+    const item = photo as Record<string, unknown>;
+
+    if (
+      typeof item.content !== 'string' ||
+      typeof item.filename !== 'string' ||
+      typeof item.path !== 'string'
+    ) {
+      throw new Error('照片数据格式不正确');
+    }
+
+    const filename = item.filename.trim().toLowerCase();
+
+    if (!/^[a-z0-9-]+\.(png|jpg|jpeg|webp)$/.test(filename)) {
+      throw new Error('照片文件名不正确');
+    }
+
+    if (item.path !== `/members/${filename}`) {
+      throw new Error('照片路径不正确');
+    }
+
+    if (!/^[A-Za-z0-9+/=]+$/.test(item.content)) {
+      throw new Error('照片内容不正确');
+    }
+
+    if (Buffer.from(item.content, 'base64').length > 3 * 1024 * 1024) {
+      throw new Error('照片不能超过 3MB');
+    }
+
+    return {
+      content: item.content,
+      filename,
+      path: item.path
+    };
+  });
+}
+
 function getGitHubConfig() {
   const token = process.env.GITHUB_TOKEN;
   const repository = process.env.GITHUB_REPO ?? 'have-glasses/postcards';
@@ -112,6 +170,66 @@ async function githubRequest(url: string, init: RequestInit & { token: string })
   return response.json();
 }
 
+async function getGitHubFileSha(repository: string, path: string, branch: string, token: string) {
+  const encodedPath = path.split('/').map(encodeURIComponent).join('/');
+  const response = await fetch(
+    `https://api.github.com/repos/${repository}/contents/${encodedPath}?ref=${encodeURIComponent(branch)}`,
+    {
+      headers: {
+        Accept: 'application/vnd.github+json',
+        Authorization: `Bearer ${token}`,
+        'X-GitHub-Api-Version': '2022-11-28'
+      }
+    }
+  );
+
+  if (response.status === 404) {
+    return null;
+  }
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(`GitHub 请求失败：${response.status} ${message}`);
+  }
+
+  const file = await response.json();
+  return typeof file.sha === 'string' ? file.sha : null;
+}
+
+async function updateGitHubFile({
+  branch,
+  content,
+  message,
+  path,
+  repository,
+  token
+}: {
+  branch: string;
+  content: string;
+  message: string;
+  path: string;
+  repository: string;
+  token: string;
+}) {
+  const encodedPath = path.split('/').map(encodeURIComponent).join('/');
+  const sha = await getGitHubFileSha(repository, path, branch, token);
+  const body: Record<string, string> = {
+    branch,
+    content,
+    message
+  };
+
+  if (sha) {
+    body.sha = sha;
+  }
+
+  return githubRequest(`https://api.github.com/repos/${repository}/contents/${encodedPath}`, {
+    method: 'PUT',
+    token,
+    body: JSON.stringify(body)
+  });
+}
+
 export async function POST(request: Request) {
   let body: SaveRequest;
 
@@ -126,33 +244,53 @@ export async function POST(request: Request) {
   }
 
   let normalizedMembers: Member[];
+  let normalizedPhotos: PhotoUpload[];
 
   try {
     normalizedMembers = normalizeMembers(body.members);
+    normalizedPhotos = normalizePhotos(body.photos);
+    const memberPhotoPaths = new Set(normalizedMembers.map((member) => member.photo));
+
+    if (normalizedPhotos.some((photo) => !memberPhotoPaths.has(photo.path))) {
+      throw new Error('上传照片必须对应成员照片路径');
+    }
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : '成员数据格式不正确' }, { status: 400 });
   }
 
   try {
     const { token, repository, branch } = getGitHubConfig();
-    const encodedPath = MEMBERS_PATH.split('/').map(encodeURIComponent).join('/');
-    const fileUrl = `https://api.github.com/repos/${repository}/contents/${encodedPath}?ref=${encodeURIComponent(branch)}`;
-    const currentFile = await githubRequest(fileUrl, { method: 'GET', token });
-    const content = `${JSON.stringify(normalizedMembers, null, 2)}\n`;
+    const uploadedFiles = [];
 
-    const result = await githubRequest(`https://api.github.com/repos/${repository}/contents/${encodedPath}`, {
-      method: 'PUT',
-      token,
-      body: JSON.stringify({
+    for (const photo of normalizedPhotos) {
+      const photoPath = `${MEMBER_PHOTO_DIR}/${photo.filename}`;
+      const result = await updateGitHubFile({
         branch,
-        message: 'Update member card data',
-        content: Buffer.from(content, 'utf8').toString('base64'),
-        sha: currentFile.sha
-      })
+        content: photo.content,
+        message: `Upload member photo ${photo.filename}`,
+        path: photoPath,
+        repository,
+        token
+      });
+      uploadedFiles.push({
+        path: photo.path,
+        commit: result.commit?.sha ?? null
+      });
+    }
+
+    const content = `${JSON.stringify(normalizedMembers, null, 2)}\n`;
+    const result = await updateGitHubFile({
+      branch,
+      content: Buffer.from(content, 'utf8').toString('base64'),
+      message: 'Update member card data',
+      path: MEMBERS_PATH,
+      repository,
+      token
     });
 
     return NextResponse.json({
       ok: true,
+      uploadedFiles,
       commit: result.commit?.sha ?? null
     });
   } catch (error) {

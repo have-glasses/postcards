@@ -527,6 +527,32 @@ body {
   line-height: 1.5;
 }
 
+.admin-photo-upload {
+  display: grid;
+  gap: 0.6rem;
+  grid-column: 1 / -1;
+  border: 1px solid rgba(103, 232, 249, 0.22);
+  border-radius: 0.9rem;
+  background: rgba(8, 47, 73, 0.22);
+  padding: 0.85rem;
+}
+
+.admin-photo-upload p {
+  margin: 0;
+  color: #e2e8f0;
+  font-size: 0.92rem;
+}
+
+.admin-photo-upload small {
+  color: #94a3b8;
+  line-height: 1.5;
+}
+
+.admin-photo-upload input[type='file'] {
+  cursor: pointer;
+  border-style: dashed;
+}
+
 .admin-page button {
   cursor: pointer;
   border: 0;

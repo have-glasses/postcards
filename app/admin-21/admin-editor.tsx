@@ -8,6 +8,12 @@ type SaveState = {
   message: string;
 };
 
+type PendingPhoto = {
+  content: string;
+  filename: string;
+  path: string;
+};
+
 const editableFields: Array<{ key: keyof Omit<Member, 'tags'>; label: string; multiline?: boolean }> = [
   { key: 'slug', label: '链接标识' },
   { key: 'name', label: '姓名' },
@@ -24,6 +30,7 @@ const editableFields: Array<{ key: keyof Omit<Member, 'tags'>; label: string; mu
 export function AdminEditor({ initialMembers }: { initialMembers: Member[] }) {
   const [password, setPassword] = useState('');
   const [members, setMembers] = useState<Member[]>(() => initialMembers.map(cloneMember));
+  const [pendingPhotos, setPendingPhotos] = useState<Record<string, PendingPhoto>>({});
   const [saveState, setSaveState] = useState<SaveState>({ status: 'idle', message: '' });
   const [activeSlug, setActiveSlug] = useState(initialMembers[0]?.slug ?? '');
 
@@ -98,6 +105,52 @@ export function AdminEditor({ initialMembers }: { initialMembers: Member[] }) {
       setActiveSlug(nextMembers[0]?.slug ?? '');
       return nextMembers;
     });
+    setPendingPhotos((currentPhotos) => {
+      const nextPhotos = { ...currentPhotos };
+      delete nextPhotos[activeMember.slug];
+      return nextPhotos;
+    });
+    setSaveState({ status: 'idle', message: '' });
+  }
+
+  async function uploadPhoto(slug: string, file: File | null) {
+    if (!file) {
+      return;
+    }
+
+    const extension = getImageExtension(file);
+
+    if (!extension) {
+      setSaveState({ status: 'error', message: '照片仅支持 png、jpg、jpeg、webp' });
+      return;
+    }
+
+    if (file.size > 3 * 1024 * 1024) {
+      setSaveState({ status: 'error', message: '照片不能超过 3MB' });
+      return;
+    }
+
+    const member = members.find((item) => item.slug === slug);
+    const safeSlug = toSafeSlug(member?.slug ?? slug);
+
+    if (!safeSlug) {
+      setSaveState({ status: 'error', message: '请先填写有效的链接标识' });
+      return;
+    }
+
+    const content = await readFileAsBase64(file);
+    const filename = `${safeSlug}.${extension}`;
+    const path = `/members/${filename}`;
+
+    updateMember(slug, { photo: path });
+    setPendingPhotos((currentPhotos) => ({
+      ...currentPhotos,
+      [slug]: {
+        content,
+        filename,
+        path
+      }
+    }));
     setSaveState({ status: 'idle', message: '' });
   }
 
@@ -110,7 +163,7 @@ export function AdminEditor({ initialMembers }: { initialMembers: Member[] }) {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ password, members })
+        body: JSON.stringify({ password, members, photos: Object.values(pendingPhotos) })
       });
 
       const result = await response.json();
@@ -123,6 +176,7 @@ export function AdminEditor({ initialMembers }: { initialMembers: Member[] }) {
         status: 'success',
         message: result.commit ? `已保存，提交 ${result.commit.slice(0, 7)}` : '已保存'
       });
+      setPendingPhotos({});
     } catch (error) {
       setSaveState({
         status: 'error',
@@ -207,6 +261,21 @@ export function AdminEditor({ initialMembers }: { initialMembers: Member[] }) {
                 </label>
               ))}
 
+              <div className="admin-photo-upload">
+                <div>
+                  <p>上传照片</p>
+                  <small>选择 png、jpg、jpeg 或 webp，保存后自动同步为当前照片路径。</small>
+                </div>
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  onChange={(event) => uploadPhoto(activeMember.slug, event.target.files?.[0] ?? null)}
+                />
+                {pendingPhotos[activeMember.slug] ? (
+                  <small className="admin-field-help">待保存：{pendingPhotos[activeMember.slug].path}</small>
+                ) : null}
+              </div>
+
               <div className="admin-tags">
                 <div className="admin-tags-title">
                   <span>标签</span>
@@ -225,6 +294,39 @@ export function AdminEditor({ initialMembers }: { initialMembers: Member[] }) {
       </section>
     </main>
   );
+}
+
+function getImageExtension(file: File) {
+  const byType: Record<string, string> = {
+    'image/png': 'png',
+    'image/jpeg': 'jpg',
+    'image/webp': 'webp'
+  };
+
+  return byType[file.type] ?? null;
+}
+
+function readFileAsBase64(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.addEventListener('load', () => {
+      const result = String(reader.result ?? '');
+      const [, content = ''] = result.split(',');
+      resolve(content);
+    });
+    reader.addEventListener('error', () => reject(new Error('照片读取失败')));
+    reader.readAsDataURL(file);
+  });
+}
+
+function toSafeSlug(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
 }
 
 function createBlankMember(existingMembers: Member[]): Member {
